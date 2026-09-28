@@ -2,13 +2,15 @@ FROM node:18
 
 WORKDIR /app
 
-COPY --chown=node:node package*.json ./
-
-USER node
+COPY package*.json ./
 
 RUN npm ci --omit=dev
 
-COPY --chown=node:node app ./app
+COPY app ./app
+
+RUN chown -R node:node /app
+
+USER node
 
 EXPOSE 8080
 
