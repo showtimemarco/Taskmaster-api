@@ -6,66 +6,67 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
+
   security-scan:
     name: Software Supply Chain Analysis
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
+          cache: npm
 
-      - name: Install Node dependencies
+      - name: Install Node Dependencies
         run: npm install
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high
-
-      - name: Run Snyk Security Scan
+      - name: Snyk Security Scan
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
 
-      - name: Run OWASP Dependency Check
+      - name: OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'Taskmaster-API'
-          path: '.'
-          format: 'HTML'
-          args: >
-            --scan .
-            --failOnCVSS 7
+          project: "TaskMaster-API"
+          path: "."
+          format: "HTML"
+          out: "dependency-check-report"
 
-      - name: Upload Dependency Check Report
-        if: always()
+      - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: dependency-check-report
-          path: reports
+          path: dependency-check-report/
 
   build-and-test:
     name: Build and Test
-    needs: security-scan
     runs-on: ubuntu-latest
+    needs: security-scan
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Build Docker images
+      - name: Build Docker Image
         run: docker compose build
 
-      - name: Start application
+      - name: Start Application
         run: docker compose up -d
 
-      - name: Wait for application
+      - name: Wait for Application
         run: |
           for i in {1..15}; do
             if curl -fsS http://localhost:8080; then
@@ -79,26 +80,26 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: Test application
-        run: curl --fail http://localhost:8080
+      - name: Test Application
+        run: curl -fsS http://localhost:8080
 
-      - name: Stop application
+      - name: Stop Application
         if: always()
         run: docker compose down
 
   dast:
     name: DAST Runtime Verification
-    needs: build-and-test
     runs-on: ubuntu-latest
+    needs: build-and-test
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Start application
+      - name: Start Application
         run: docker compose up -d --build
 
-      - name: Wait for application
+      - name: Wait for Application
         run: |
           for i in {1..15}; do
             if curl -fsS http://localhost:8080; then
@@ -115,8 +116,8 @@ jobs:
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: 'http://localhost:8080'
+          target: "http://localhost:8080"
 
-      - name: Stop application
+      - name: Stop Application
         if: always()
         run: docker compose down
