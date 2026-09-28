@@ -2,10 +2,13 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY --chown=node:node package*.json ./
 
-COPY app ./app
+USER node
+
+RUN npm ci --omit=dev
+
+COPY --chown=node:node app ./app
 
 EXPOSE 8080
 
