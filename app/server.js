@@ -5,6 +5,12 @@ const PORT = 8080;
 
 app.use(express.json());
 
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  next();
+});
+
 app.get("/", (req, res) => {
   res.json({
     service: "TaskMaster API",
