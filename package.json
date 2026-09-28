@@ -1,0 +1,13 @@
+{
+  "name": "taskmaster-api",
+  "version": "1.0.0",
+  "description": "TaskMaster API for DevSecOps security testing",
+  "main": "app/server.js",
+  "scripts": {
+    "start": "node app/server.js"
+  },
+  "dependencies": {
+    "express": "4.17.1",
+    "lodash": "4.17.20"
+  }
+}
